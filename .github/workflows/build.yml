@@ -1,0 +1,37 @@
+name: Gerar Instalável Android (APK)
+
+on:
+  push:
+    tags:
+      - 'v*' # Vai rodar sempre que você criar uma tag de versão (ex: v1.0.0)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar o Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar o Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x' # Usa a versão mais recente do Flutter 3
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      - name: Compilar o APK (Instalável)
+        run: flutter build apk --release
+
+      - name: Criar a Release no GitHub com o APK
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
