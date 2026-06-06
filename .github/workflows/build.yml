@@ -1,37 +1,35 @@
-name: Gerar Instalável Android (APK)
+name: Build My Apps
 
 on:
   push:
-    tags:
-      - 'v*' # Vai rodar sempre que você criar uma tag de versão (ex: v1.0.0)
+    branches:
+      - main
+      - master # Deixei as duas aqui, assim não importa qual nome sua branch tem, vai rodar!
 
 jobs:
   build:
+    name: Build and Release new apk
     runs-on: ubuntu-latest
     steps:
-      - name: Baixar o código do repositório
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Configurar o Java
-        uses: actions/setup-java@v3
+      - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '17' # Atualizado para o Java 17, exigido pelas versões mais novas do Flutter
 
-      - name: Configurar o Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x' # Usa a versão mais recente do Flutter 3
+          channel: 'stable'
+          
+      - run: flutter pub get
+      
+      - run: flutter build apk --release --split-per-abi
 
-      - name: Instalar dependências
-        run: flutter pub get
-
-      - name: Compilar o APK (Instalável)
-        run: flutter build apk --release
-
-      - name: Criar a Release no GitHub com o APK
-        uses: softprops/action-gh-release@v1
+      - name: Push to Releases
+        uses: ncipollo/release-action@v1
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "build/app/outputs/flutter-apk/*.apk" # Caminho corrigido que pega todos os APKs gerados
+          tag: v0.0.1
+          allowUpdates: true # Permite que o GitHub atualize o mesmo APK se você der push de novo
+          token: ${{ secrets.GITHUB_TOKEN }} # Corrigido para o token padrão do GitHub
